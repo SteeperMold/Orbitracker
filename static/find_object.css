@@ -1,13 +1,16 @@
-body {
+/* Теперь находится в base.css */
+/*body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     margin: 0;
-}
+}*/
 
-div {
+/* Убрал т.к. перед панелью меню ставится
+    большой пробел, а на остальной визуал не влияет */
+/* div {
     text-align: center;
     margin-top: 50px;
-}
+} */
 
 h1 {
     color: #333;

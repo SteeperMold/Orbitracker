@@ -27,15 +27,15 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', title='Главная страница')
 
 
 @app.route('/find_object', methods=['GET'])
 def find_object():
-    return render_template('find_object.html')
+    return render_template('find_object.html', title='Поиск спутника')
 
 
-@app.route('/', methods=['POST'])
+@app.route('/find_object', methods=['POST'])
 def get_timetable():
     try:
         lat = float(request.form.get('lat-input'))
@@ -136,7 +136,7 @@ def logout():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    return render_template('profile.html', title='Профиль')
 
 
 if __name__ == '__main__':

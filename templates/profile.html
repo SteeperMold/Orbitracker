@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Ваш профиль</h1>
+<link rel="stylesheet" href="../static/profile.css">
+
+<form action="/logout" style="text-align: center">
+    <h1>Ваш профиль</h1>
+    <button class="exit">Выйти</button>
+</form>
 {% endblock %}
