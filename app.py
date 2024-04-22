@@ -14,29 +14,16 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 
-def main():
-    db_session.global_init("db/orbitracker.db")
-    app.run()
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    db_sess = db_session.create_session()
-    return db_sess.query(User).get(user_id)
-
-
 @app.route('/')
 def index():
-    return render_template('index.html', title='Главная страница')
+    return render_template('index.html')
 
 
-@app.route('/find_object', methods=['GET'])
-def find_object():
-    return render_template('find_object.html', title='Поиск спутника')
-
-
-@app.route('/find_object', methods=['POST'])
+@app.route('/find_object', methods=['GET', 'POST'])
 def get_timetable():
+    if request.method == 'GET':
+        return render_template('find_object.html')
+
     try:
         lat = float(request.form.get('lat-input'))
         lon = float(request.form.get('lon-input'))
@@ -48,10 +35,9 @@ def get_timetable():
     except ValueError:
         return render_template('error.html')
 
-    orb_calc = OrbCalculator(lat, lon, alt, min_elevation, min_apogee, start_time, duration)
-    all_passes = orb_calc.get_passes()
+    passes = OrbCalculator.get_passes(lat, lon, alt, min_elevation, min_apogee, start_time, duration)
 
-    return render_template('find_object.html', passes=all_passes, lon=lon, lat=lat, alt=alt)
+    return render_template('found_objects.html', passes=passes, lon=lon, lat=lat, alt=alt)
 
 
 @app.route('/download_trajectory', methods=['POST'])
@@ -87,19 +73,26 @@ def download_trajectory():
     return send_file(file, as_attachment=True, download_name='Траектория.txt', mimetype='text/plain')
 
 
+@login_manager.user_loader
+def load_user(user_id):
+    db_sess = db_session.create_session()
+    return db_sess.query(User).get(user_id)
+
+
 @app.route('/register', methods=['GET', 'POST'])
-def reqister():
+def register():
     form = RegisterForm()
+
     if form.validate_on_submit():
+
         if form.password.data != form.password_again.data:
-            return render_template('register.html', title='Регистрация',
-                                   form=form,
-                                   message="Пароли не совпадают")
+            return render_template('register.html', message="Пароли не совпадают", form=form)
+
         db_sess = db_session.create_session()
+
         if db_sess.query(User).filter(User.email == form.email.data).first():
-            return render_template('register.html', title='Регистрация',
-                                   form=form,
-                                   message="Такой пользователь уже есть")
+            return render_template('register.html', message="Такой пользователь уже есть", form=form)
+
         user = User(
             name=form.name.data,
             email=form.email.data
@@ -107,23 +100,25 @@ def reqister():
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
+
         return redirect('/login')
-    return render_template('register.html', title='Регистрация', form=form)
+    return render_template('register.html', form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
+
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
+
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
-        return render_template('login.html',
-                               message="Неправильный логин или пароль",
-                               form=form)
-    return render_template('login.html', title='Авторизация', form=form)
+        return render_template('login.html', message="Неправильный логин или пароль", form=form)
+
+    return render_template('login.html', form=form)
 
 
 @app.route('/logout')
@@ -136,8 +131,9 @@ def logout():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html', title='Профиль')
+    return render_template('profile.html')
 
 
 if __name__ == '__main__':
-    main()
+    db_session.global_init("db/orbitracker.db")
+    app.run()

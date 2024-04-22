@@ -8,9 +8,13 @@
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
           crossorigin="anonymous">
     <link rel="stylesheet" href="../static/base.css">
-    <title>{{title}}</title>
+
+    {% block head %}{% endblock %}
+    <title>{% block title %}{% endblock %}</title>
+
 </head>
 <body>
+
 <div class="topnav">
     <a href="/" class="tab {% if active_tab == 'home' %}active{% endif %}">Главная</a>
     <a href="/find_object" class="tab {% if active_tab == 'find_object' %}active{% endif %}">Найти объект</a>
@@ -23,9 +27,10 @@
         {% endif %}
     </div>
 </div>
-<!-- Begin page content -->
+
 <main role="main" class="container">
     {% block content %}{% endblock %}
 </main>
+
 </body>
 </html>
