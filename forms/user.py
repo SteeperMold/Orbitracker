@@ -4,15 +4,15 @@ from wtforms.validators import DataRequired
 
 
 class RegisterForm(FlaskForm):
-    email = EmailField('Почта', validators=[DataRequired()])
-    password = PasswordField('Пароль', validators=[DataRequired()])
-    password_again = PasswordField('Повторите пароль', validators=[DataRequired()])
-    name = StringField('Имя пользователя', validators=[DataRequired()])
+    email = EmailField('Почта', validators=[DataRequired(message='Это обязательное поле')])
+    password = PasswordField('Пароль', validators=[DataRequired(message='Это обязательное поле')])
+    password_again = PasswordField('Повторите пароль', validators=[DataRequired(message='Это обязательное поле')])
+    name = StringField('Имя пользователя', validators=[DataRequired(message='Это обязательное поле')])
     submit = SubmitField('Войти')
 
 
 class LoginForm(FlaskForm):
-    email = EmailField('Почта', validators=[DataRequired()])
-    password = PasswordField('Пароль', validators=[DataRequired()])
+    email = EmailField('Почта', validators=[DataRequired(message='Это обязательное поле')])
+    password = PasswordField('Пароль', validators=[DataRequired(message='Это обязательное поле')])
     remember_me = BooleanField('Запомнить меня')
     submit = SubmitField('Войти')

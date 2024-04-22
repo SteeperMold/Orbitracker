@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, send_file, redirect
 from pyorbital.orbital import Orbital
 from calculations import OrbCalculator
 from forms.user import RegisterForm, LoginForm
+from forms.coords_form import ObservationPointCoordsForm
 from data import db_session
 from data.users import User
 from flask_login import LoginManager, login_user, login_required, logout_user
@@ -21,23 +22,21 @@ def index():
 
 @app.route('/find_object', methods=['GET', 'POST'])
 def get_timetable():
-    if request.method == 'GET':
-        return render_template('find_object.html')
+    form = ObservationPointCoordsForm()
 
-    try:
-        lat = float(request.form.get('lat-input'))
-        lon = float(request.form.get('lon-input'))
-        alt = float(request.form.get('alt-input')) / 1000
-        min_elevation = float(request.form.get('min-elevation-input'))
-        min_apogee = float(request.form.get('min-apogee-input'))
-        start_time = dt.datetime.strptime(request.form.get('start-time-input'), '%Y-%m-%dT%H:%M')
-        duration = int(request.form.get('duration-input'))
-    except ValueError:
-        return render_template('error.html')
+    if form.validate_on_submit():
+        lat = form.lat.data
+        lon = form.lon.data
+        alt = form.alt.data
+        min_elevation = form.min_elevation.data
+        min_apogee = form.min_apogee.data
+        start_time = form.start_time.data
+        duration = form.duration.data
 
-    passes = OrbCalculator.get_passes(lat, lon, alt, min_elevation, min_apogee, start_time, duration)
+        passes = OrbCalculator.get_passes(lat, lon, alt, min_elevation, min_apogee, start_time, duration)
 
-    return render_template('found_objects.html', passes=passes, lon=lon, lat=lat, alt=alt)
+        return render_template('found_objects.html', passes=passes, lon=lon, lat=lat, alt=alt)
+    return render_template('find_object.html', form=form)
 
 
 @app.route('/download_trajectory', methods=['POST'])

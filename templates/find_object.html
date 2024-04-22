@@ -4,37 +4,74 @@
 {% endblock %}
 {% block title %}Поиск спутника{% endblock %}
 {% block content %}
-    <form method="post" action="/find_object" style="text-align: center">
+    <form action="" method="post">
         <h1>Для получения расписания пролетов, заполните все поля</h1>
-        <div class="input-block">
-            <label for="lat">Широта: </label>
-            <input id="lat" type="text" name="lat-input">
-        </div>
-        <div class="input-block">
-            <label for="lon">Долгота: </label>
-            <input id="lon" type="text" name="lon-input">
-        </div>
-        <div class="input-block">
-            <label for="alt">Высота над уровнем моря (в метрах): </label>
-            <input id="alt" type="number" name="alt-input">
-        </div>
-        <div class="input-block">
-            <label for="min-elevation">Минимальное возвышение спутника: </label>
-            <input id="min-elevation" type="text" name="min-elevation-input">
-        </div>
-        <div class="input-block">
-            <label for="min-apogee">Минимальная кульминация: </label>
-            <input id="min-apogee" type="text" name="min-apogee-input">
-        </div>
-        <div class="input-block">
-            <label for="start-time">Время начала наблюдения (UTC): </label>
-            <input id="start-time" type="datetime-local" name="start-time-input">
-        </div>
-        <div class="input-block">
-            <label for="duration">Длительность наблюдения (в часах): </label>
-            <input id="duration" type="text" name="duration-input">
-        </div>
-
-        <button type="submit">Получить расписание →</button>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.lat.label }}<br>
+            {{ form.lat(class="form-control") }}<br>
+            {% for error in form.lat.errors %}
+                <p class="alert alert-danger" role="alert">
+                    {{ error }}
+                </p>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.lon.label }}<br>
+            {{ form.lon(class="form-control") }}<br>
+            {% for error in form.lon.errors %}
+                <p class="alert alert-danger" role="alert">
+                    {{ error }}
+                </p>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.alt.label }}<br>
+            {{ form.alt(class="form-control") }}<br>
+            {% for error in form.alt.errors %}
+                <p class="alert alert-danger" role="alert">
+                    {{ error }}
+                </p>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.min_elevation.label }}<br>
+            {{ form.min_elevation(class="form-control") }}<br>
+            {% for error in form.min_elevation.errors %}
+                <p class="alert alert-danger" role="alert">
+                    {{ error }}
+                </p>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.min_apogee.label }}<br>
+            {{ form.min_apogee(class="form-control") }}<br>
+            {% for error in form.min_apogee.errors %}
+                <p class="alert alert-danger" role="alert">
+                    {{ error }}
+                </p>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.start_time.label }}<br>
+            {{ form.start_time(class='form-control') }}<br>
+            {% for error in form.start_time.errors %}
+                <p class="alert alert-danger" role="alert">
+                    {{ error }}
+                </p>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.duration.label }}<br>
+            {{ form.duration(class="form-control") }}<br>
+            {% for error in form.duration.errors %}
+                <p class="alert alert-danger" role="alert">
+                    {{ error }}
+                </p>
+            {% endfor %}
+        </p>
+        <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+        {{ message }}
     </form>
+
 {% endblock %}
