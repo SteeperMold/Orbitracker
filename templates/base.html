@@ -11,23 +11,18 @@
     <title>{{title}}</title>
 </head>
 <body>
-<header>
-    <nav class="navbar navbar-light bg-light">
-        <a class="navbar-brand" href="/">Orbitracker</a>
+<div class="topnav">
+    <a href="/" class="tab {% if active_tab == 'home' %}active{% endif %}">Главная</a>
+    <a href="/find_object" class="tab {% if active_tab == 'find_object' %}active{% endif %}">Найти объект</a>
+    <div class="right-links">
         {% if current_user.is_authenticated %}
-    <a class="navbar-brand" href="/profile">Профиль</a>
-{% else %}
-    <p>
-        <a class="btn btn-primary " href="/register">Зарегистрироваться</a>
-        <a class="btn btn-success" href="/login">Войти</a>
-    </p>
-{% endif %}
-    </nav>
-</header>
-    <div class="topnav">
-      <a class="active" href="/">Главная</a>
-      <a href="/find_object">Найти объект</a>
+            <a href="/profile" class="tab {% if active_tab == 'profile' %}active{% endif %}">Профиль</a>
+        {% else %}
+            <a href="/register" class="tab {% if active_tab == 'register' %}active{% endif %}">Зарегистрироваться</a>
+            <a href="/login" class="tab {% if active_tab == 'login' %}active{% endif %}">Войти</a>
+        {% endif %}
     </div>
+</div>
 <!-- Begin page content -->
 <main role="main" class="container">
     {% block content %}{% endblock %}
