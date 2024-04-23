@@ -3,10 +3,10 @@ import datetime as dt
 from flask import Flask, render_template, request, send_file, redirect
 from pyorbital.orbital import Orbital
 from calculations import OrbCalculator
-from forms.user import RegisterForm, LoginForm
+from forms.user import RegisterForm, LoginForm, EditProfileForm
 from data import db_session
 from data.users import User
-from flask_login import LoginManager, login_user, login_required, logout_user
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -27,12 +27,12 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    return render_template('index.html', title='Главная страница')
+    return render_template('index.html', title='Главная страница', active_tab='home')
 
 
 @app.route('/find_object', methods=['GET'])
 def find_object():
-    return render_template('find_object.html', title='Поиск спутника')
+    return render_template('find_object.html', title='Поиск спутника', active_tab='find_object')
 
 
 @app.route('/find_object', methods=['POST'])
@@ -94,12 +94,12 @@ def reqister():
         if form.password.data != form.password_again.data:
             return render_template('register.html', title='Регистрация',
                                    form=form,
-                                   message="Пароли не совпадают")
+                                   message="Пароли не совпадают", active_tab='register')
         db_sess = db_session.create_session()
         if db_sess.query(User).filter(User.email == form.email.data).first():
             return render_template('register.html', title='Регистрация',
                                    form=form,
-                                   message="Такой пользователь уже есть")
+                                   message="Такой пользователь уже есть", active_tab='register')
         user = User(
             name=form.name.data,
             email=form.email.data
@@ -108,7 +108,7 @@ def reqister():
         db_sess.add(user)
         db_sess.commit()
         return redirect('/login')
-    return render_template('register.html', title='Регистрация', form=form)
+    return render_template('register.html', title='Регистрация', form=form, active_tab='register')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -122,8 +122,8 @@ def login():
             return redirect("/")
         return render_template('login.html',
                                message="Неправильный логин или пароль",
-                               form=form)
-    return render_template('login.html', title='Авторизация', form=form)
+                               form=form, active_tab='login')
+    return render_template('login.html', title='Авторизация', form=form, active_tab='login')
 
 
 @app.route('/logout')
@@ -136,7 +136,22 @@ def logout():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html', title='Профиль')
+    return render_template('profile.html', title='Профиль', active_tab='profile')
+
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    form = EditProfileForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+        if user:
+            user.name = form.name.data
+            db_sess.commit()
+            return redirect('/profile')
+
+    return render_template('edit_profile.html', form=form, active_tab='profile')
 
 
 if __name__ == '__main__':

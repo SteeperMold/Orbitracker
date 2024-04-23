@@ -22,3 +22,41 @@ button[class='exit'] {
 button[type='exit']:hover {
     background-color: #0056b3;
 }
+
+.info-block {
+    display: flex;
+    align-items: center;
+}
+
+.info-block label:first-of-type {
+    margin-right: 10px;
+}
+
+.info-block input[type="string"] {
+    display: none;
+}
+
+.container {
+    text-align: left; /* Выравнивание текста внутри контейнера */
+}
+
+.info-block {
+    border: 1px solid #ccc; /* Устанавливаем рамку для блока */
+    border-radius: 5px; /* Скругляем углы рамки */
+    padding: 10px; /* Отступы внутри рамки */
+    margin-bottom: 10px; /* Отступ снизу */
+    display: inline-block; /* Делаем блок строчно-блочным элементом */
+}
+
+.info {
+    margin-bottom: 10px; /* Отступ между лейблами */
+}
+
+.edit-button {
+    display: block; /* Делаем кнопку блочным элементом */
+    width: 100%; /* Занимает всю доступную ширину */
+    background-color: transparent; /* Прозрачный фон кнопки */
+    text-align: center; /* Выравниваем текст по центру */
+    color: black;
+    cursor: pointer; /* Устанавливаем курсор указателя */
+}
