@@ -1,6 +1,6 @@
 from io import BytesIO
 import datetime as dt
-from flask import Flask, render_template, request, send_file, redirect
+from flask import Flask, render_template, request, send_file, redirect, session, jsonify
 from pyorbital.orbital import Orbital
 from calculations import OrbCalculator
 from forms.user import RegisterForm, LoginForm, EditProfileForm, EditGeopositionForm
@@ -20,11 +20,11 @@ def index():
     return render_template('index.html', active_tab='home')
 
 
-@app.route('/find_object', methods=['GET', 'POST'])
+@app.route('/passes', methods=['GET'])
 def get_timetable():
-    form = ObservationPointCoordsForm()
+    form = ObservationPointCoordsForm(request.args, csrf_enabled=False)
 
-    if form.validate_on_submit():
+    if form.validate():
         lat = form.lat.data
         lon = form.lon.data
         alt = form.alt.data
@@ -35,19 +35,90 @@ def get_timetable():
 
         passes = OrbCalculator.get_passes(lat, lon, alt, min_elevation, min_apogee, start_time, duration)
 
-        return render_template('found_objects.html', passes=passes, lon=lon, lat=lat, alt=alt, active_tab='find_object')
-    return render_template('find_object.html', form=form, active_tab='find_object')
+        return render_template('passes.html', passes=passes, lon=lon, lat=lat, alt=alt)
+    return render_template('get_passes.html', form=form)
 
 
-@app.route('/download_trajectory', methods=['POST'])
+@app.route('/make-pass-trajectory', methods=['GET'])
+def make_pass_trajectory():
+    satellite = request.args.get('satellite')
+    start_time = dt.datetime.strptime(f'{request.args.get("start")} +0000', '%Y.%m.%d %H:%M:%S %z')
+    end_time = dt.datetime.strptime(f'{request.args.get("end")} +0000', '%Y.%m.%d %H:%M:%S %z')
+    lon = float(request.args.get('lon'))
+    lat = float(request.args.get('lat'))
+    alt = float(request.args.get('alt'))
+
+    current_time = dt.datetime.now(tz=dt.timezone.utc)
+
+    orb = Orbital(satellite, 'tle.txt')
+
+    absolute_trajectory = []
+    viewer_trajectory = []
+
+    for shift in range(0, (end_time - max(start_time, current_time)).seconds, 15):
+        shifted_time = max(start_time, current_time) + dt.timedelta(seconds=shift)
+
+        satellite_lon, satellite_lat, satellite_alt = orb.get_lonlatalt(shifted_time)
+        absolute_trajectory.append([satellite_lon, satellite_lat])
+
+        azimuth, elevation = orb.get_observer_look(shifted_time, lon, lat, alt)
+        viewer_trajectory.append([azimuth, elevation])
+
+    session['absolute_trajectory'] = absolute_trajectory
+    session['viewer_trajectory'] = viewer_trajectory
+    session['lat'] = lat
+    session['lon'] = lon
+    session['alt'] = alt
+    session['start_time'] = start_time.strftime('%Y.%m.%d %H:%M:%S')
+    session['end_time'] = end_time.strftime('%Y.%m.%d %H:%M:%S')
+    session['satellite'] = satellite
+
+    return ''
+
+
+@app.route('/get-pass-trajectory', methods=['GET'])
+def get_pass_trajectory():
+    return jsonify({'absolute_trajectory': session['absolute_trajectory'],
+                    'viewer_trajectory': session['viewer_trajectory'],
+                    'lat': session['lat'], 'lon': session['lon'],
+                    'start_time': session['start_time'], 'end_time': session['end_time']}), 200
+
+
+@app.route('/get-viewer-coords', methods=['GET'])
+def get_viewer_coords():
+    satellite = session['satellite']
+    start_time = dt.datetime.strptime(f'{session["start_time"]} +0000', '%Y.%m.%d %H:%M:%S %z')
+    end_time = dt.datetime.strptime(f'{session["end_time"]} +0000', '%Y.%m.%d %H:%M:%S %z')
+    current_time = dt.datetime.now(tz=dt.timezone.utc)
+    lat = session['lat']
+    lon = session['lon']
+    alt = session['alt']
+
+    if not start_time <= current_time <= end_time:
+        return jsonify({'error': 'wrong time'}), 200
+
+    orb = Orbital(satellite, 'tle.txt')
+
+    satellite_lon, satellite_lat, satellite_alt = orb.get_lonlatalt(current_time)
+    azimuth, elevation = orb.get_observer_look(current_time, lon, lat, alt)
+
+    return jsonify({'lon': satellite_lon, 'lat': satellite_lat, 'azimuth': round(azimuth, 2),
+                    'elevation': round(elevation, 2)}), 200
+
+
+@app.route('/view-pass-trajectory', methods=['GET'])
+def view_pass_trajectory():
+    return render_template('trajectory.html')
+
+
+@app.route('/download-trajectory', methods=['GET'])
 def download_trajectory():
-    data = request.get_json()
-    satellite = data.get('satellite')
-    start_time = dt.datetime.strptime(data.get('start'), '%Y.%m.%d %H:%M:%S')
-    end_time = dt.datetime.strptime(data.get('end'), '%Y.%m.%d %H:%M:%S')
-    lon = float(data.get('lon'))
-    lat = float(data.get('lat'))
-    alt = float(data.get('alt'))
+    satellite = request.args.get('satellite')
+    start_time = dt.datetime.strptime(request.args.get('start'), '%Y.%m.%d %H:%M:%S')
+    end_time = dt.datetime.strptime(request.args.get('end'), '%Y.%m.%d %H:%M:%S')
+    lon = float(request.args.get('lon'))
+    lat = float(request.args.get('lat'))
+    alt = float(request.args.get('alt'))
 
     orb = Orbital(satellite, 'tle.txt')
 
@@ -91,8 +162,7 @@ def register():
         db_sess = db_session.create_session()
 
         if db_sess.query(User).filter(User.email == form.email.data).first():
-            return render_template('register.html', message="Такой пользователь уже есть",
-                                   form=form, active_tab='register')
+            return render_template('register.html', message="Такой пользователь уже есть", form=form)
 
         user = User(
             name=form.name.data,

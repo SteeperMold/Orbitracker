@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block head %}
+    <link rel="stylesheet" href="../static/find_object.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+{% endblock %}
+{% block title %}Пролеты{% endblock %}
+{% block content %}
+    {% if passes %}
+        <h1 class="text-center mt-5">Спутники пролетающие в указанное время</h1>
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <table class="table table-striped table-bordered table-hover table-responsive">
+                    <tr>
+                        <td class="text-dark align-middle">Название спутника</td>
+                        <td class="text-dark align-middle">Время выхода из-за горизонта</td>
+                        <td class="text-dark align-middle">Время захода за горизонт</td>
+                        <td class="text-dark align-middle">Кульминация</td>
+                        <td class="text-dark align-middle">Скачать файл с траекторией</td>
+                        <td class="text-dark align-middle">Просмотреть траекторию</td>
+                    </tr>
+                    {% for pass in passes %}
+                        <tr data-satellite="{{ pass[0] }}" data-start="{{ pass[1] }}"
+                            data-end="{{ pass[2] }}" data-lon="{{ lon }}" data-lat="{{ lat }}" data-alt="{{ alt }}">
+                            <td class="align-middle">{{ pass[0] }}</td>
+                            <td class="align-middle">{{ pass[1] }}</td>
+                            <td class="align-middle">{{ pass[2] }}</td>
+                            <td class="align-middle">{{ pass[3] }}</td>
+                            <td>
+                                <button id="download" class="btn btn-light btn-outline-dark">Скачать</button>
+                            </td>
+                            <td>
+                                <a id="trajectory" class="btn btn-light btn-outline-dark">Траектория</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('#download').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const row = button.closest('tr');
+                        const requestData = {
+                            params: {
+                                satellite: row.getAttribute('data-satellite'),
+                                start: row.getAttribute('data-start'),
+                                end: row.getAttribute('data-end'),
+                                lon: row.getAttribute('data-lon'),
+                                lat: row.getAttribute('data-lat'),
+                                alt: row.getAttribute('data-alt')
+                            }
+                        };
+
+                        axios.get('/download-trajectory', requestData, {
+                            responseType: 'blob', headers: {'Content-Type': 'application/json'}
+                        }).then(response => {
+                            if (response.status === 200) {
+                                const blob = new Blob([response.data]);
+                                const link = document.createElement('a');
+                                link.href = window.URL.createObjectURL(blob);
+                                link.setAttribute('download', `Траектория ${requestData.params.satellite}.txt`);
+                                link.style.display = 'none';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }
+                        }).catch(error => console.error(error));
+                    });
+                });
+
+                document.querySelectorAll('#trajectory').forEach(link => {
+                    link.addEventListener('click', () => {
+                        const row = link.closest('tr');
+                        const requestData = {
+                            params: {
+                                satellite: row.getAttribute('data-satellite'),
+                                start: row.getAttribute('data-start'),
+                                end: row.getAttribute('data-end'),
+                                lon: row.getAttribute('data-lon'),
+                                lat: row.getAttribute('data-lat'),
+                                alt: row.getAttribute('data-alt')
+                            }
+                        };
+
+                        axios.get('/make-pass-trajectory', requestData)
+                            .then(() => window.location.href = '/view-pass-trajectory')
+                            .catch(error => console.log(error));
+
+                    });
+                });
+            });
+        </script>
+    {% else %}
+        <h1 class="text-center mt-5">Ничего не пролетает... :(</h1>
+    {% endif %}
+
+{% endblock %}

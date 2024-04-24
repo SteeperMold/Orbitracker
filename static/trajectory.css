@@ -1,0 +1,26 @@
+.times-container {
+    display: flex;
+    justify-content: space-between;
+    width: 50%;
+    margin: 0 auto;
+}
+
+.maps-container {
+    display: flex;
+    justify-content: space-between;
+    width: 98%;
+    margin: 0 auto;
+}
+
+#map {
+    height: 90vh;
+    width: 100%;
+    margin-left: 1rem;
+}
+
+.projection-container {
+    display: flex;
+    align-items: center;
+    margin-right: 1rem;
+    width: 47.5%;
+}
