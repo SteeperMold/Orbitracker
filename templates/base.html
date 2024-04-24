@@ -17,7 +17,8 @@
 
 <div class="topnav">
     <a href="/" class="tab {% if active_tab == 'home' %}active{% endif %}">Главная</a>
-    <a href="/find_object" class="tab {% if active_tab == 'find_object' %}active{% endif %}">Найти объект</a>
+    <a href="/passes" class="tab {% if active_tab == 'passes' %}active{% endif %}">Посмотреть пролеты</a>
+    <a href="/find-object" class="tab {% if active_tab == 'find_object' %}active{% endif %}">Найти объект</a>
     <div class="right-links">
         {% if current_user.is_authenticated %}
             <a href="/profile" class="tab {% if active_tab == 'profile' %}active{% endif %}">Профиль</a>

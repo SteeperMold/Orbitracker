@@ -4,6 +4,9 @@ from wtforms.validators import NumberRange, InputRequired
 
 
 class ObservationPointCoordsForm(FlaskForm):
+    class Meta:
+        csrf = False
+
     lat = FloatField('Широта', validators=[
         InputRequired(message='Это обязательное поле'),
         NumberRange(min=-90, max=90, message='Широта должна быть от %(min)s до %(max)s')
@@ -31,4 +34,3 @@ class ObservationPointCoordsForm(FlaskForm):
         InputRequired(message='Это обязательное поле'),
         NumberRange(min=0, message='Длительность наблюдения не может быть отрицательной')
     ])
-    submit = SubmitField('Получить расписание →')

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block head %}
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../static/trajectory.css">
+{% endblock %}
+{% block title %}Траектория спутника{% endblock %}
+{% block content %}
+
+    <div class="times-container">
+        <div>
+            <p>Начало пролета (UTC)</p>
+            <p id="start-time"></p>
+        </div>
+        <div>
+            <p>Конец пролета (UTC)</p>
+            <p id="end-time"></p>
+        </div>
+        <div>
+            <p>Азимут</p>
+            <p id="azimuth"></p>
+        </div>
+        <div>
+            <p>Элевация</p>
+            <p id="elevation"></p>
+        </div>
+    </div>
+
+    <div class="maps-container">
+        <div id="map"></div>
+    </div>
+
+    <script>
+        axios.get('/get-pass-trajectory')
+            .then(response => {
+                const satellitePath = response.data.absolute_trajectory;
+                const lon = response.data.lon;
+                const lat = response.data.lat;
+                const startTime = response.data.start_time;
+                const endTime = response.data.end_time;
+
+                document.getElementById('start-time').innerHTML = startTime;
+                document.getElementById('end-time').innerHTML = endTime;
+
+                const map = L.map('map').setView(satellitePath[Math.round(satellitePath.length / 2)], 2);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {}).addTo(map);
+
+                L.polyline(satellitePath, {color: 'red'}).addTo(map);
+
+                const marker = L.marker([lat, lon], {
+                    icon: L.icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                        iconAnchor: [12, 41],
+                    })
+                })
+                marker.bindPopup("Вы находитесь здесь").openPopup();
+                marker.addTo(map);
+
+                const satelliteMarker = L.circleMarker([satellitePath[0][0], satellitePath[0][1]], {
+                    radius: 5,
+                    color: 'red',
+                    fillColor: '#a00524',
+                    fillOpacity: 1
+                }).addTo(map);
+                satelliteMarker.bindPopup('Местоположение спутника');
+
+                document.querySelector('.leaflet-control-attribution').remove();
+
+                setInterval(async () => {
+                    const response = await axios.get('/get-viewer-coords');
+
+                    if (response.data.error) {
+                        document.getElementById('azimuth').innerHTML = 'Пролет еще не начался или уже закончился';
+                        document.getElementById('elevation').innerHTML = 'Пролет еще не начался или уже закончился';
+                        return;
+                    }
+
+                    document.getElementById('azimuth').innerHTML = response.data.azimuth;
+                    document.getElementById('elevation').innerHTML = response.data.elevation;
+
+                    satelliteMarker.setLatLng(response.data.lat, response.data.lon);
+                }, 1000);
+            })
+            .catch(error => console.error(error));
+    </script>
+
+{% endblock %}

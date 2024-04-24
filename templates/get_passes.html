@@ -4,9 +4,8 @@
 {% endblock %}
 {% block title %}Поиск спутника{% endblock %}
 {% block content %}
-    <form action="" method="post">
+    <form action="" method="get">
         <h1>Для получения расписания пролетов, заполните все поля</h1>
-        {{ form.hidden_tag() }}
         <p>
             {{ form.lat.label }}<br>
             {{ form.lat(class="form-control") }}<br>
@@ -70,7 +69,7 @@
                 </p>
             {% endfor %}
         </p>
-        <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+        <button type="submit" class="btn btn-primary">Получить расписание →</button>
         {{ message }}
     </form>
 
