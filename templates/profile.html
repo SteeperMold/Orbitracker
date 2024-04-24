@@ -8,27 +8,61 @@
 
 {% block content %}
 <h1>Ваш профиль</h1>
-    <div class="container">
-        <div class="info-block">
-            {% block profile %}
+<div class="all-blocks">
+
+    <div class="info-block">
+        {% block profile %}
             <div class="info">
-                <label for="alt">Имя пользователя:</label>
-                <label for="alt">{{ current_user.name }}</label>
+                <label>Имя пользователя:</label>
+                <label>{{ current_user.name }}</label>
             </div>
             <div class="info">
-                <label for="alt">Почта:</label>
-                <label for="alt">{{ current_user.email }}</label>
+                <label>Почта:</label>
+                <label>{{ current_user.email }}</label>
             </div>
             <div class="info">
-                <label for="alt">Дата регистрации:</label>
-                <label for="alt">{{ current_user.created_date.strftime('%d.%m.%Y') }}</label>
+                <label>Дата регистрации:</label>
+                <label>{{ current_user.created_date.strftime('%d.%m.%Y') }}</label>
             </div>
-            <a href="{{ url_for('edit_profile') }}">Изменить</a>
-            {% endblock %}
+
+            <form action="/edit_profile" style="text-align: center">
+                <button class="btn btn-primary">Изменить</button>
+            </form>
+        {% endblock %}
+    </div>
+
+    <div class="geoposition-block">
+        <label>Точка отслеживания:</label>
+        {% block geoposition %}
+            <div class="info">
+                <label>Широта:</label>
+                <label>{{ current_user.lat }}</label>
+            </div>
+            <div class="info">
+                <label>Долгота:</label>
+                <label>{{ current_user.lon }}</label>
+            </div>
+            <div class="info">
+                <label>Высота:</label>
+                <label>{{ current_user.alt }}</label>
+            </div>
+
+            <form action="/edit_geoposition" style="text-align: center">
+                <button class="btn btn-primary">Изменить</button>
+            </form>
+        {% endblock %}
+    </div>
+
+    <div class="object-block">
+        <label>Объекты:</label>
+        <div class="info">
+            <label>Тут пусто</label>
+            <label>сделаем если успеем</label>
         </div>
     </div>
 
-<form action="/logout" style="text-align: center">
-    <button class="exit">Выйти</button>
+</div>
+<form action="/logout" style="text-align: center; margin-top: 50px;">
+    <button class="btn btn-primary">Выйти</button>
 </form>
 {% endblock %}
