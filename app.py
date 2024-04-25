@@ -2,7 +2,8 @@ from io import BytesIO
 import datetime as dt
 from flask import Flask, render_template, request, send_file, redirect, session, jsonify
 from pyorbital.orbital import Orbital
-from calculations import OrbCalculator
+from calculations import OrbCalculator, SATELLITES
+import geoip2.database
 from forms.user import RegisterForm, LoginForm, EditProfileForm
 from forms.coords_form import ObservationPointCoordsForm
 from data import db_session
@@ -22,7 +23,7 @@ def index():
 
 @app.route('/passes', methods=['GET'])
 def get_timetable():
-    form = ObservationPointCoordsForm(request.args, csrf_enabled=False)
+    form = ObservationPointCoordsForm(request.args)
 
     if form.validate():
         lat = form.lat.data
@@ -143,6 +144,46 @@ def download_trajectory():
     return send_file(file, as_attachment=True, download_name='Траектория.txt', mimetype='text/plain')
 
 
+@app.route('/find-object', methods=['GET'])
+def find_object():
+    query = request.args.get('query')
+
+    if not query:
+        return render_template('find_object.html')
+
+    satellites = []
+    for sat in SATELLITES:
+        if query.lower() in sat.lower():
+            satellites.append(sat)
+
+    return render_template('find_object.html', satellites=satellites)
+
+
+@app.route('/object/<name>', methods=['GET'])
+def track_object(name):
+    start_time = dt.datetime.now(tz=dt.timezone.utc)
+
+    orb = Orbital(name, 'tle.txt')
+
+    trajectory = []
+    for shift in range(-1 * 60, 1 * 60):
+        lon, lat, alt = orb.get_lonlatalt(start_time + dt.timedelta(minutes=shift))
+        trajectory.append((lon, lat, alt))
+
+    satellite_lon, satellite_lat, satellite_alt = orb.get_lonlatalt(start_time)
+
+    try:
+        reader = geoip2.database.Reader('db/GeoLite2-City.mmdb')
+        response = reader.city(request.remote_addr)
+        user_lat = response.location.latitude
+        user_lon = response.location.longitude
+    except geoip2.errors.AddressNotFoundError:
+        user_lat = user_lon = None
+
+    return render_template('orbit.html', trajectory=trajectory, user_lat=user_lat, user_lon=user_lon,
+                           satellite_lat=satellite_lat, satellite_lon=satellite_lon, satellite_alt=satellite_alt)
+
+
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
@@ -221,4 +262,4 @@ def edit_profile():
 
 if __name__ == '__main__':
     db_session.global_init("db/orbitracker.db")
-    app.run()
+    app.run(host='0.0.0.0')

@@ -34,3 +34,4 @@ class ObservationPointCoordsForm(FlaskForm):
         InputRequired(message='Это обязательное поле'),
         NumberRange(min=0, message='Длительность наблюдения не может быть отрицательной')
     ])
+

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Поиск спутника{% endblock %}
+{% block content %}
+
+    {% if not satellites %}
+        <form action="" method="get">
+            <h1>Введите название космического аппарата, который вы хотите найти</h1>
+            <input type="text" name="query">
+            <button type="submit">Найти</button>
+        </form>
+    {% else %}
+        <div>
+            <h1>По запросу найдены:</h1>
+            {% for sat in satellites %}
+                <a href="/object/{{ sat }}">{{ sat }}</a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+{% endblock %}
