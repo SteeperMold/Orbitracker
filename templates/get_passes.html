@@ -6,33 +6,39 @@
 {% block content %}
     <form action="" method="get">
         <h1>Для получения расписания пролетов, заполните все поля</h1>
-        <p>
-            {{ form.lat.label }}<br>
-            {{ form.lat(class="form-control") }}<br>
-            {% for error in form.lat.errors %}
-                <p class="alert alert-danger" role="alert">
-                    {{ error }}
-                </p>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.lon.label }}<br>
-            {{ form.lon(class="form-control") }}<br>
-            {% for error in form.lon.errors %}
-                <p class="alert alert-danger" role="alert">
-                    {{ error }}
-                </p>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.alt.label }}<br>
-            {{ form.alt(class="form-control") }}<br>
-            {% for error in form.alt.errors %}
-                <p class="alert alert-danger" role="alert">
-                    {{ error }}
-                </p>
-            {% endfor %}
-        </p>
+        {% if form.lat %}
+            <p>
+                {{ form.lat.label }}<br>
+                {{ form.lat(class="form-control") }}<br>
+                {% for error in form.lat.errors %}
+                    <p class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </p>
+                {% endfor %}
+            </p>
+        {% endif %}
+        {% if form.lon %}
+            <p>
+                {{ form.lon.label }}<br>
+                {{ form.lon(class="form-control") }}<br>
+                {% for error in form.lon.errors %}
+                    <p class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </p>
+                {% endfor %}
+            </p>
+        {% endif %}
+        {% if form.alt %}
+            <p>
+                {{ form.alt.label }}<br>
+                {{ form.alt(class="form-control") }}<br>
+                {% for error in form.alt.errors %}
+                    <p class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </p>
+                {% endfor %}
+            </p>
+        {% endif %}
         <p>
             {{ form.min_elevation.label }}<br>
             {{ form.min_elevation(class="form-control") }}<br>

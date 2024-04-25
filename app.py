@@ -4,8 +4,8 @@ from flask import Flask, render_template, request, send_file, redirect, session,
 from pyorbital.orbital import Orbital
 from calculations import OrbCalculator, SATELLITES
 import geoip2.database
-from forms.user import RegisterForm, LoginForm, EditProfileForm
-from forms.coords_form import ObservationPointCoordsForm
+from forms.user import RegisterForm, LoginForm, EditProfileForm, EditGeopositionForm
+from forms.coords_form import ObservationPointCoordsForm, PassesSettingsForm
 from data import db_session
 from data.users import User
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -18,17 +18,39 @@ login_manager.init_app(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html', active_tab='home')
+    return redirect('/object/METEOR-M2%203')
 
 
 @app.route('/passes', methods=['GET'])
 def get_timetable():
-    form = ObservationPointCoordsForm(request.args)
+    user = None
+    if current_user.is_authenticated:
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+
+    try:
+        reader = geoip2.database.Reader('db/GeoLite2-City.mmdb')
+        response = reader.city(request.remote_addr)
+        ip_lat = response.location.latitude
+        ip_lon = response.location.longitude
+    except geoip2.errors.AddressNotFoundError:
+        ip_lat = ip_lon = None
+
+    if (user and user.lon and user.lat and user.alt) or (ip_lat and ip_lon):
+        form = PassesSettingsForm(request.args)
+    else:
+        form = ObservationPointCoordsForm(request.args)
 
     if form.validate():
-        lat = form.lat.data
-        lon = form.lon.data
-        alt = form.alt.data
+        if isinstance(form, ObservationPointCoordsForm):
+            lat = form.lat.data
+            lon = form.lon.data
+            alt = form.alt.data
+        else:
+            lat = user.lat or ip_lat
+            lon = user.lon or ip_lon
+            alt = user.alt or 0
+
         min_elevation = form.min_elevation.data
         min_apogee = form.min_apogee.data
         start_time = form.start_time.data
@@ -56,11 +78,11 @@ def make_pass_trajectory():
     absolute_trajectory = []
     viewer_trajectory = []
 
-    for shift in range(0, (end_time - max(start_time, current_time)).seconds, 15):
+    for shift in range(0, (end_time - max(start_time, current_time)).seconds, 20):
         shifted_time = max(start_time, current_time) + dt.timedelta(seconds=shift)
 
         satellite_lon, satellite_lat, satellite_alt = orb.get_lonlatalt(shifted_time)
-        absolute_trajectory.append([satellite_lon, satellite_lat])
+        absolute_trajectory.append([satellite_lon, satellite_lat, satellite_alt])
 
         azimuth, elevation = orb.get_observer_look(shifted_time, lon, lat, alt)
         viewer_trajectory.append([azimuth, elevation])
@@ -166,7 +188,7 @@ def track_object(name):
     orb = Orbital(name, 'tle.txt')
 
     trajectory = []
-    for shift in range(-1 * 60, 1 * 60):
+    for shift in range(-60, 60):
         lon, lat, alt = orb.get_lonlatalt(start_time + dt.timedelta(minutes=shift))
         trajectory.append((lon, lat, alt))
 
@@ -180,7 +202,7 @@ def track_object(name):
     except geoip2.errors.AddressNotFoundError:
         user_lat = user_lon = None
 
-    return render_template('orbit.html', trajectory=trajectory, user_lat=user_lat, user_lon=user_lon,
+    return render_template('orbit.html', sat=name, trajectory=trajectory, user_lat=user_lat, user_lon=user_lon,
                            satellite_lat=satellite_lat, satellite_lon=satellite_lon, satellite_alt=satellite_alt)
 
 
@@ -250,11 +272,9 @@ def profile():
 @login_required
 def edit_profile():
     form = EditProfileForm()
-
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.id == current_user.id).first()
-
         if user:
             user.name = form.name.data
             db_sess.commit()
@@ -280,6 +300,52 @@ def edit_geoposition():
             return redirect('/profile')
 
     return render_template('edit_geoposition.html', form=form, active_tab='profile')
+
+
+@app.route('/api/coords', methods=['GET'])
+def coords():
+    satellite = request.args.get('sat')
+    time = request.args.get('time')
+    if time:
+        dt.datetime.strptime(f"{request.args.get('time')} +0000", '%Y-%m-%d %H:%M:%S %z')
+
+    if satellite not in SATELLITES:
+        return jsonify({'error': 'satellite not found'}), 200
+
+    orb = Orbital(satellite, 'tle.txt')
+
+    lon, lat, alt = orb.get_lonlatalt(time or dt.datetime.now(tz=dt.timezone.utc))
+
+    return jsonify({'lon': lon, 'lat': lat, 'alt': alt}), 200
+
+
+@app.route('/api/trajectory', methods=['GET'])
+def trajectory():
+    satellite = request.args.get('sat')
+    lat = float(request.args.get('lat'))
+    lon = float(request.args.get('lon'))
+    alt = float(request.args.get('alt'))
+    time = request.args.get('time')
+    if time:
+        dt.datetime.strptime(f"{request.args.get('time')} +0000", '%Y-%m-%d %H:%M:%S %z')
+
+    orb = Orbital(satellite, 'tle.txt')
+    azimuth, elevation = orb.get_observer_look(time or dt.datetime.now(tz=dt.timezone.utc), lon, lat, alt)
+
+    return jsonify({'azimuth': azimuth, 'elevation': elevation}), 200
+
+
+@app.route('/api/passes', methods=['GET'])
+def passes():
+    lon = float(request.args.get('lon'))
+    lat = float(request.args.get('lat'))
+    alt = float(request.args.get('alt'))
+    start_time = dt.datetime.strptime(f"{request.args.get('time')} +0000", '%Y-%m-%d %H:%M:%S %z')
+    duration = int(request.args.get('duration'))
+
+    passes = OrbCalculator.get_passes(lat, lon, alt, 0, 0, start_time, duration)
+
+    return jsonify({'passes': passes}), 200
 
 
 if __name__ == '__main__':
