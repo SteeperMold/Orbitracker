@@ -16,7 +16,7 @@
         }
     </style>
 {% endblock %}
-{% block title %}Траектория спутника{% endblock %}
+{% block title %}Траектория спутника {{ sat }}{% endblock %}
 {% block content %}
 
     <div class="maps-container">
@@ -24,16 +24,16 @@
     </div>
 
     <script>
-        const viewer = new Cesium.Viewer('cesiumContainer', {
-            animation: false,  // Скрыть элемент анимации времени
-            timeline: false,   // Скрыть элемент временной шкалы
-            fullscreenButton: false  // Скрыть кнопку переключения полноэкранного режима
-        });
+        const satelliteName = '{{ sat }}';
+        const satelliteCoords = [{{ satellite_lon }}, {{ satellite_lat }}, {{ satellite_alt }}];
+        const userCoords = [{{ user_lon|tojson }}, {{ user_lat|tojson }}, 0];
+        const positions = {{ trajectory|tojson }}.map(coords => Cesium.Cartesian3.fromDegrees(...coords));
 
-        const positions =
-        {{ trajectory|tojson }}.map(coords =>
-            Cesium.Cartesian3.fromDegrees(coords[0], coords[1], coords[2])
-        );
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            animation: false,
+            timeline: false,
+            fullscreenButton: false
+        });
 
         const satellitePathEntity = viewer.entities.add({
             polyline: {
@@ -44,12 +44,30 @@
         });
 
         const point = viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection()).add({
-            position: Cesium.Cartesian3.fromDegrees({{ satellite_lon }}, {{ satellite_lat }}, {{ satellite_alt }}),
+            position: Cesium.Cartesian3.fromDegrees(...satelliteCoords),
             color: Cesium.Color.RED,
             pixelSize: 15,
         });
 
+        if ({{ user_lon|tojson }}) {
+            viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection()).add({
+                position: Cesium.Cartesian3.fromDegrees(...userCoords),
+                color: Cesium.Color.BLUE,
+                pixelSize: 15,
+            });
+        }
 
+
+        setInterval(() => {
+            axios.get('/api/coords', {params: {sat: satelliteName}})
+                .then(response => {
+                    const {lon, lat, alt} = response.data;
+                    point.position = Cesium.Cartesian3.fromDegrees(lon, lat, alt);
+                })
+                .catch(error => console.error(error));
+        }, 1000);
+
+        document.querySelector('.cesium-widget-credits').remove();
     </script>
 
 {% endblock %}

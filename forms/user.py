@@ -26,6 +26,10 @@ class EditProfileForm(FlaskForm):
 
 
 class EditGeopositionForm(FlaskForm):
+    """
+    Форма для сохранения точки наблюдения в профиле
+    """
+
     lat = FloatField('Широта', validators=[
         InputRequired(message='Это обязательное поле'),
         NumberRange(min=-90, max=90, message='Широта должна быть от %(min)s до %(max)s')
