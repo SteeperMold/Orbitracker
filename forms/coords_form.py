@@ -1,9 +1,14 @@
 from flask_wtf import FlaskForm
-from wtforms import SubmitField, FloatField, DateTimeLocalField, IntegerField
+from wtforms import FloatField, DateTimeLocalField, IntegerField
 from wtforms.validators import NumberRange, InputRequired
 
 
 class ObservationPointCoordsForm(FlaskForm):
+    """
+    Полная форма для ввода координат наблюдателя, желаемых параметров пролета
+    и временного периода наблюдения
+    """
+
     class Meta:
         csrf = False
 
@@ -37,6 +42,11 @@ class ObservationPointCoordsForm(FlaskForm):
 
 
 class PassesSettingsForm(FlaskForm):
+    """
+    Неполная форма для ввода желаемых параметров пролета
+    и временного периода наблюдения
+    """
+
     class Meta:
         csrf = False
 

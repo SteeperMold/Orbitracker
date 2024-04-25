@@ -13,6 +13,7 @@ class User(SqlAlchemyBase, UserMixin):
     email = sqlalchemy.Column(sqlalchemy.String, index=True, unique=True)
     objects = sqlalchemy.Column(sqlalchemy.String)
     hashed_password = sqlalchemy.Column(sqlalchemy.String)
+    # Параметры точки наблюдения
     lat = sqlalchemy.Column(sqlalchemy.Float)
     lon = sqlalchemy.Column(sqlalchemy.Float)
     alt = sqlalchemy.Column(sqlalchemy.Float)

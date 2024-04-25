@@ -23,11 +23,13 @@ def index():
 
 @app.route('/passes', methods=['GET'])
 def get_timetable():
+    # Получаем пользователя если он зарегистрирован
     user = None
     if current_user.is_authenticated:
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.id == current_user.id).first()
 
+    # Получаем координаты пользователя по айпи
     try:
         reader = geoip2.database.Reader('db/GeoLite2-City.mmdb')
         response = reader.city(request.remote_addr)
@@ -36,12 +38,15 @@ def get_timetable():
     except geoip2.errors.AddressNotFoundError:
         ip_lat = ip_lon = None
 
+    # Если пользователь сохранил свои координаты или получилось определить их по айпи,
+    # отображаем форму без ввода координат
     if (user and user.lon and user.lat and user.alt) or (ip_lat and ip_lon):
         form = PassesSettingsForm(request.args)
     else:
         form = ObservationPointCoordsForm(request.args)
 
     if form.validate():
+        # Если форма была с вводом координат, то достаем их из формы
         if isinstance(form, ObservationPointCoordsForm):
             lat = form.lat.data
             lon = form.lon.data
@@ -64,6 +69,10 @@ def get_timetable():
 
 @app.route('/make-pass-trajectory', methods=['GET'])
 def make_pass_trajectory():
+    """
+    Расчитывает траекторию спутника и сохраняет в сессию, чтобы при обновлении страницы
+    не нужно было заново расчитывать координаты
+    """
     satellite = request.args.get('satellite')
     start_time = dt.datetime.strptime(f'{request.args.get("start")} +0000', '%Y.%m.%d %H:%M:%S %z')
     end_time = dt.datetime.strptime(f'{request.args.get("end")} +0000', '%Y.%m.%d %H:%M:%S %z')
@@ -78,12 +87,15 @@ def make_pass_trajectory():
     absolute_trajectory = []
     viewer_trajectory = []
 
+    # Для упрощения вычислений, расчитываем координаты с шагом 20 секунд
     for shift in range(0, (end_time - max(start_time, current_time)).seconds, 20):
         shifted_time = max(start_time, current_time) + dt.timedelta(seconds=shift)
 
+        # Расчитываем абсолютные координаты спутника
         satellite_lon, satellite_lat, satellite_alt = orb.get_lonlatalt(shifted_time)
         absolute_trajectory.append([satellite_lon, satellite_lat, satellite_alt])
 
+        # Расчитываем координаты спутника на небе относительно наблюдателя
         azimuth, elevation = orb.get_observer_look(shifted_time, lon, lat, alt)
         viewer_trajectory.append([azimuth, elevation])
 
@@ -101,6 +113,9 @@ def make_pass_trajectory():
 
 @app.route('/get-pass-trajectory', methods=['GET'])
 def get_pass_trajectory():
+    """
+    Достать траекторию спутника из сессии
+    """
     return jsonify({'absolute_trajectory': session['absolute_trajectory'],
                     'viewer_trajectory': session['viewer_trajectory'],
                     'lat': session['lat'], 'lon': session['lon'],
@@ -109,6 +124,9 @@ def get_pass_trajectory():
 
 @app.route('/get-viewer-coords', methods=['GET'])
 def get_viewer_coords():
+    """
+    Расчитать текущие координаты спутника относительно наблюдателя, чтобы обновить их в браузере
+    """
     satellite = session['satellite']
     start_time = dt.datetime.strptime(f'{session["start_time"]} +0000', '%Y.%m.%d %H:%M:%S %z')
     end_time = dt.datetime.strptime(f'{session["end_time"]} +0000', '%Y.%m.%d %H:%M:%S %z')
@@ -145,21 +163,16 @@ def download_trajectory():
 
     orb = Orbital(satellite, 'tle.txt')
 
-    content = f'Satellite {satellite}\n'
-    content += f'Start date & time {start_time.strftime("%Y-%m-%d %H:%M:%S UTC")}\n'
+    content = f'Спутник {satellite}\n'
+    content += f'Начальная дата и время {start_time.strftime("%Y-%m-%d %H:%M:%S UTC")}\n'
     content += '\n'
-    content += 'Time (UTC)\tAzimuth\tElevation\n'
+    content += 'Время (UTC)\tАзимут\tЭлевация\n'
     content += '\n'
 
-    current_coords = orb.get_observer_look(start_time, lon, lat, alt)
-    current_time = start_time
-    shift = 0
-
-    while current_time <= end_time:
+    for shift in range((end_time - start_time).seconds):
         current_time = start_time + dt.timedelta(seconds=shift)
-        content += f'{current_time.strftime("%H:%M:%S")}\t{current_coords[0]:.2f}\t{current_coords[1]:.2f}\n'
-        current_coords = orb.get_observer_look(current_time, lon, lat, alt)
-        shift += 1
+        azimuth, elevation = orb.get_observer_look(current_time, lon, lat, alt)
+        content += f'{current_time.strftime("%H:%M:%S")}\t{azimuth:.2f}\t{elevation:.2f}\n'
 
     file = BytesIO(content.encode('utf-8'))
 
@@ -178,6 +191,7 @@ def find_object():
         if query.lower() in sat.lower():
             satellites.append(sat)
 
+    # Возвращаем подходящие названия спутников пользователю, чтобы тот выбрал нужный
     return render_template('find_object.html', satellites=satellites)
 
 
@@ -188,19 +202,30 @@ def track_object(name):
     orb = Orbital(name, 'tle.txt')
 
     trajectory = []
+    # Расчитываем траекторию за час до этой секудны, и на час после,
+    # примерно один виток вокруг Земли
     for shift in range(-60, 60):
         lon, lat, alt = orb.get_lonlatalt(start_time + dt.timedelta(minutes=shift))
         trajectory.append((lon, lat, alt))
 
     satellite_lon, satellite_lat, satellite_alt = orb.get_lonlatalt(start_time)
 
-    try:
-        reader = geoip2.database.Reader('db/GeoLite2-City.mmdb')
-        response = reader.city(request.remote_addr)
-        user_lat = response.location.latitude
-        user_lon = response.location.longitude
-    except geoip2.errors.AddressNotFoundError:
-        user_lat = user_lon = None
+    # Получаем координаты пользователя, чтобы отобразить его местонахождение на карте
+    user_lat = user_lon = None
+    if current_user.is_authenticated:
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+        user_lat = user.lat
+        user_lon = user.lon
+
+    if not user_lat and not user_lon:
+        try:
+            reader = geoip2.database.Reader('db/GeoLite2-City.mmdb')
+            response = reader.city(request.remote_addr)
+            user_lat = response.location.latitude
+            user_lon = response.location.longitude
+        except geoip2.errors.AddressNotFoundError:
+            user_lat = user_lon = None
 
     return render_template('orbit.html', sat=name, trajectory=trajectory, user_lat=user_lat, user_lon=user_lon,
                            satellite_lat=satellite_lat, satellite_lon=satellite_lon, satellite_alt=satellite_alt)
@@ -209,7 +234,8 @@ def track_object(name):
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.query(User).get(user_id)
+    user = db_sess.query(User).get(user_id)
+    return user
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -231,6 +257,7 @@ def register():
             name=form.name.data,
             email=form.email.data
         )
+
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
@@ -272,9 +299,11 @@ def profile():
 @login_required
 def edit_profile():
     form = EditProfileForm()
+
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.id == current_user.id).first()
+
         if user:
             user.name = form.name.data
             db_sess.commit()
@@ -304,6 +333,9 @@ def edit_geoposition():
 
 @app.route('/api/coords', methods=['GET'])
 def coords():
+    """
+    Получение текущих абсолютных координат спутника
+    """
     satellite = request.args.get('sat')
     time = request.args.get('time')
     if time:
@@ -321,6 +353,9 @@ def coords():
 
 @app.route('/api/trajectory', methods=['GET'])
 def trajectory():
+    """
+    Получение текущих координат спутника на небе относительно наблюдателя
+    """
     satellite = request.args.get('sat')
     lat = float(request.args.get('lat'))
     lon = float(request.args.get('lon'))
@@ -337,6 +372,9 @@ def trajectory():
 
 @app.route('/api/passes', methods=['GET'])
 def passes():
+    """
+    Получение всех пролетов всех спутников за указанный период времени
+    """
     lon = float(request.args.get('lon'))
     lat = float(request.args.get('lat'))
     alt = float(request.args.get('alt'))
