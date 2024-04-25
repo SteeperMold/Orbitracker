@@ -11,7 +11,8 @@ h1 {
     margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: space-around;
+    margin-right: 60px;
 }
 
 .info-block {
@@ -23,14 +24,6 @@ h1 {
 }
 
 .geoposition-block {
-    border: 5px solid #cecece;
-    padding: 1rem;
-    display: flex;
-    border-radius: 10px;
-    flex-direction: column;
-}
-
-.object-block {
     border: 5px solid #cecece;
     padding: 1rem;
     display: flex;

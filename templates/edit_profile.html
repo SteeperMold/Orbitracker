@@ -6,11 +6,14 @@
     <p>
         {{ form.name.label }}<br>
         {{ form.name(class="form-control", value=current_user.name) }}<br>
-        {% for error in form.name.errors %}
-            <p class="alert alert-danger" role="alert">
-                {{ error }}
-            </p>
-        {% endfor %}
+    </p>
+    <p>
+        {{ form.email.label }}<br>
+        {{ form.email(class="form-control", value=current_user.email, disabled=True) }}<br>
+    </p>
+    <p>
+        {{ form.created_date.label }}<br>
+        {{ form.created_date(class="form-control", value=current_user.created_date.strftime('%d.%m.%Y'), disabled=True) }}<br>
     </p>
     <p ALIGN="center">
         {{ form.submit(type="submit", class="btn btn-primary") }}

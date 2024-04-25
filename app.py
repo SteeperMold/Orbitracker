@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, send_file, redirect, session,
 from pyorbital.orbital import Orbital
 from calculations import OrbCalculator, SATELLITES
 import geoip2.database
-from forms.user import RegisterForm, LoginForm, EditProfileForm
+from forms.user import RegisterForm, LoginForm, EditProfileForm, EditGeopositionForm
 from forms.coords_form import ObservationPointCoordsForm
 from data import db_session
 from data.users import User
@@ -36,8 +36,8 @@ def get_timetable():
 
         passes = OrbCalculator.get_passes(lat, lon, alt, min_elevation, min_apogee, start_time, duration)
 
-        return render_template('passes.html', passes=passes, lon=lon, lat=lat, alt=alt)
-    return render_template('get_passes.html', form=form)
+        return render_template('passes.html', passes=passes, lon=lon, lat=lat, alt=alt, active_tab='passes')
+    return render_template('get_passes.html', form=form, active_tab='passes')
 
 
 @app.route('/make-pass-trajectory', methods=['GET'])
@@ -149,14 +149,14 @@ def find_object():
     query = request.args.get('query')
 
     if not query:
-        return render_template('find_object.html')
+        return render_template('find_object.html', active_tab='find_object')
 
     satellites = []
     for sat in SATELLITES:
         if query.lower() in sat.lower():
             satellites.append(sat)
 
-    return render_template('find_object.html', satellites=satellites)
+    return render_template('find_object.html', satellites=satellites, active_tab='find_object')
 
 
 @app.route('/object/<name>', methods=['GET'])
@@ -203,7 +203,8 @@ def register():
         db_sess = db_session.create_session()
 
         if db_sess.query(User).filter(User.email == form.email.data).first():
-            return render_template('register.html', message="Такой пользователь уже есть", form=form)
+            return render_template('register.html', message="Такой пользователь уже есть",
+                                   form=form, active_tab='register')
 
         user = User(
             name=form.name.data,

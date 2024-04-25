@@ -13,9 +13,9 @@ class User(SqlAlchemyBase, UserMixin):
     email = sqlalchemy.Column(sqlalchemy.String, index=True, unique=True)
     objects = sqlalchemy.Column(sqlalchemy.String)
     hashed_password = sqlalchemy.Column(sqlalchemy.String)
-    lat = sqlalchemy.Column(sqlalchemy.Float)
-    lon = sqlalchemy.Column(sqlalchemy.Float)
-    alt = sqlalchemy.Column(sqlalchemy.Float)
+    lat = sqlalchemy.Column(sqlalchemy.Float, default='Н/Д')
+    lon = sqlalchemy.Column(sqlalchemy.Float, default='Н/Д')
+    alt = sqlalchemy.Column(sqlalchemy.Float, default='Н/Д')
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
 
     def set_password(self, password):

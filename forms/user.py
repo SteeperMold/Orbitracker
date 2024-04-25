@@ -20,6 +20,8 @@ class LoginForm(FlaskForm):
 
 class EditProfileForm(FlaskForm):
     name = StringField('Имя пользователя', validators=[DataRequired()])
+    email = EmailField('Почта')
+    created_date = StringField('Дата регистрации')
     submit = SubmitField('Сохранить')
 
 
