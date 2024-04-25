@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, SubmitField, EmailField, BooleanField
-from wtforms.validators import DataRequired
+from wtforms import PasswordField, StringField, SubmitField, EmailField, BooleanField, FloatField
+from wtforms.validators import DataRequired, InputRequired, NumberRange
 
 
 class RegisterForm(FlaskForm):
@@ -20,4 +20,20 @@ class LoginForm(FlaskForm):
 
 class EditProfileForm(FlaskForm):
     name = StringField('Имя пользователя', validators=[DataRequired()])
+    submit = SubmitField('Сохранить')
+
+
+class EditGeopositionForm(FlaskForm):
+    lat = FloatField('Широта', validators=[
+        InputRequired(message='Это обязательное поле'),
+        NumberRange(min=-90, max=90, message='Широта должна быть от %(min)s до %(max)s')
+    ])
+    lon = FloatField('Долгота', validators=[
+        InputRequired(message='Это обязательное поле'),
+        NumberRange(min=-180, max=180, message='Долгота должна быть от %(min)s до %(max)s')
+    ])
+    alt = FloatField('Высота над уровнем моря (в метрах)', validators=[
+        InputRequired(message='Это обязательное поле'),
+        NumberRange(min=0, message='Высота не может быть отрицательной')
+    ])
     submit = SubmitField('Сохранить')

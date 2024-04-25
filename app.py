@@ -18,7 +18,7 @@ login_manager.init_app(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', active_tab='home')
 
 
 @app.route('/passes', methods=['GET'])
@@ -197,7 +197,8 @@ def register():
     if form.validate_on_submit():
 
         if form.password.data != form.password_again.data:
-            return render_template('register.html', message="Пароли не совпадают", form=form)
+            return render_template('register.html', message="Пароли не совпадают",
+                                   form=form, active_tab='register')
 
         db_sess = db_session.create_session()
 
@@ -213,7 +214,7 @@ def register():
         db_sess.commit()
 
         return redirect('/login')
-    return render_template('register.html', form=form)
+    return render_template('register.html', form=form, active_tab='register')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -227,9 +228,9 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
-        return render_template('login.html', message="Неправильный логин или пароль", form=form)
+        return render_template('login.html', message="Неправильный логин или пароль", form=form, active_tab='login')
 
-    return render_template('login.html', form=form)
+    return render_template('login.html', form=form, active_tab='login')
 
 
 @app.route('/logout')
@@ -242,22 +243,43 @@ def logout():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    return render_template('profile.html', active_tab='profile')
 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
     form = EditProfileForm()
+
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.id == current_user.id).first()
+
         if user:
             user.name = form.name.data
             db_sess.commit()
             return redirect('/profile')
 
     return render_template('edit_profile.html', form=form, active_tab='profile')
+
+
+@app.route('/edit_geoposition', methods=['GET', 'POST'])
+@login_required
+def edit_geoposition():
+    form = EditGeopositionForm()
+
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+
+        if user:
+            user.lat = form.lat.data
+            user.lon = form.lon.data
+            user.alt = form.alt.data
+            db_sess.commit()
+            return redirect('/profile')
+
+    return render_template('edit_geoposition.html', form=form, active_tab='profile')
 
 
 if __name__ == '__main__':

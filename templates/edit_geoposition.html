@@ -1,0 +1,37 @@
+{% extends "profile.html" %}
+
+{% block geoposition %}
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.lat.label }}<br>
+        {{ form.lat(class="form-control", value=current_user.lat) }}<br>
+        {% for error in form.lat.errors %}
+            <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.lon.label }}<br>
+        {{ form.lon(class="form-control", value=current_user.lon) }}<br>
+        {% for error in form.lon.errors %}
+            <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.alt.label }}<br>
+        {{ form.alt(class="form-control", value=current_user.alt) }}<br>
+        {% for error in form.alt.errors %}
+            <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+    <p ALIGN="center">
+        {{ form.submit(type="submit", class="btn btn-primary") }}
+    </p>
+</form>
+{% endblock %}
