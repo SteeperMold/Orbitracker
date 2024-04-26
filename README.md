@@ -3,7 +3,7 @@
 
 Запуск сайта Orbitalik:
 1. Склонировать репозиторий и перейти в него::
-    `git clone https://github.com/SteeperMold/Orbitalik`
+    `git clone https://github.com/SteeperMold/Orbitalik`  
      `cd ./Orbitalik`
 2. Установить модули через консоль:
    `pip install -r rquirements.txt`
