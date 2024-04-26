@@ -12,7 +12,7 @@ h1 {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
-    margin-right: 60px;
+    margin-left: 50px;
 }
 
 .info-block {

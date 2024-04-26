@@ -11,19 +11,20 @@
 <div class="all-blocks">
 
     <div class="info-block">
+        <label>Информация о пользователе:</label>
         {% block profile %}
-            <div class="info">
-                <label>Имя пользователя:</label>
-                <label>{{ current_user.name }}</label>
-            </div>
-            <div class="info">
-                <label>Почта:</label>
-                <label>{{ current_user.email }}</label>
-            </div>
-            <div class="info">
-                <label>Дата регистрации:</label>
-                <label>{{ current_user.created_date.strftime('%d.%m.%Y') }}</label>
-            </div>
+            <p>
+                {{ form1.name.label }}<br>
+                {{ form1.name(class="form-control", value=current_user.name, disabled=True) }}<br>
+            </p>
+            <p>
+                {{ form1.email.label }}<br>
+                {{ form1.email(class="form-control", value=current_user.email, disabled=True) }}<br>
+            </p>
+            <p>
+                {{ form1.created_date.label }}<br>
+                {{ form1.created_date(class="form-control", value=current_user.created_date.strftime('%d.%m.%Y'), disabled=True) }}<br>
+            </p>
 
             <form action="/edit_profile" style="text-align: center">
                 <button class="btn btn-primary">Изменить</button>
@@ -32,20 +33,20 @@
     </div>
 
     <div class="geoposition-block">
-        <label>Точка отслеживания:</label>
+        <label>Точка наблюдения:</label>
         {% block geoposition %}
-            <div class="info">
-                <label>Широта:</label>
-                <label>{{ current_user.lat }}</label>
-            </div>
-            <div class="info">
-                <label>Долгота:</label>
-                <label>{{ current_user.lon }}</label>
-            </div>
-            <div class="info">
-                <label>Высота:</label>
-                <label>{{ current_user.alt }}</label>
-            </div>
+            <p>
+                {{ form2.lat.label }}<br>
+                {{ form2.lat(class="form-control", value=current_user.lat, disabled=True) }}<br>
+            </p>
+            <p>
+                {{ form2.lon.label }}<br>
+                {{ form2.lon(class="form-control", value=current_user.lon, disabled=True) }}<br>
+            </p>
+            <p>
+                {{ form2.alt.label }}<br>
+                {{ form2.alt(class="form-control", value=current_user.alt, disabled=True) }}<br>
+            </p>
 
             <form action="/edit_geoposition" style="text-align: center">
                 <button class="btn btn-primary">Изменить</button>

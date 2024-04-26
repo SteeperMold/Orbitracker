@@ -10,70 +10,42 @@
             <p>
                 {{ form.lat.label }}<br>
                 {{ form.lat(class="form-control") }}<br>
-                {% for error in form.lat.errors %}
-                    <p class="alert alert-danger" role="alert">
-                        {{ error }}
-                    </p>
-                {% endfor %}
+
             </p>
         {% endif %}
         {% if form.lon %}
             <p>
                 {{ form.lon.label }}<br>
                 {{ form.lon(class="form-control") }}<br>
-                {% for error in form.lon.errors %}
-                    <p class="alert alert-danger" role="alert">
-                        {{ error }}
-                    </p>
-                {% endfor %}
+
             </p>
         {% endif %}
         {% if form.alt %}
             <p>
                 {{ form.alt.label }}<br>
                 {{ form.alt(class="form-control") }}<br>
-                {% for error in form.alt.errors %}
-                    <p class="alert alert-danger" role="alert">
-                        {{ error }}
-                    </p>
-                {% endfor %}
+
             </p>
         {% endif %}
         <p>
             {{ form.min_elevation.label }}<br>
             {{ form.min_elevation(class="form-control") }}<br>
-            {% for error in form.min_elevation.errors %}
-                <p class="alert alert-danger" role="alert">
-                    {{ error }}
-                </p>
-            {% endfor %}
+
         </p>
         <p>
             {{ form.min_apogee.label }}<br>
             {{ form.min_apogee(class="form-control") }}<br>
-            {% for error in form.min_apogee.errors %}
-                <p class="alert alert-danger" role="alert">
-                    {{ error }}
-                </p>
-            {% endfor %}
+
         </p>
         <p>
             {{ form.start_time.label }}<br>
             {{ form.start_time(class='form-control') }}<br>
-            {% for error in form.start_time.errors %}
-                <p class="alert alert-danger" role="alert">
-                    {{ error }}
-                </p>
-            {% endfor %}
+
         </p>
         <p>
             {{ form.duration.label }}<br>
             {{ form.duration(class="form-control") }}<br>
-            {% for error in form.duration.errors %}
-                <p class="alert alert-danger" role="alert">
-                    {{ error }}
-                </p>
-            {% endfor %}
+
         </p>
         <button type="submit" class="btn btn-primary">Получить расписание →</button>
         {{ message }}

@@ -63,8 +63,8 @@ def get_timetable():
 
         passes = OrbCalculator.get_passes(lat, lon, alt, min_elevation, min_apogee, start_time, duration)
 
-        return render_template('passes.html', passes=passes, lon=lon, lat=lat, alt=alt)
-    return render_template('get_passes.html', form=form)
+        return render_template('passes.html', passes=passes, lon=lon, lat=lat, alt=alt, active_tab='passes')
+    return render_template('get_passes.html', form=form, active_tab='passes')
 
 
 @app.route('/make-pass-trajectory', methods=['GET'])
@@ -293,13 +293,16 @@ def logout():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html', active_tab='profile')
+    form1 = EditProfileForm()
+    form2 = EditGeopositionForm()
+    return render_template('profile.html', form1=form1, form2=form2, active_tab='profile')
 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
     form = EditProfileForm()
+    form2 = EditGeopositionForm()
 
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -310,13 +313,14 @@ def edit_profile():
             db_sess.commit()
             return redirect('/profile')
 
-    return render_template('edit_profile.html', form=form, active_tab='profile')
+    return render_template('edit_profile.html', form=form, form2=form2, active_tab='profile')
 
 
 @app.route('/edit_geoposition', methods=['GET', 'POST'])
 @login_required
 def edit_geoposition():
     form = EditGeopositionForm()
+    form1 = EditProfileForm()
 
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -329,7 +333,7 @@ def edit_geoposition():
             db_sess.commit()
             return redirect('/profile')
 
-    return render_template('edit_geoposition.html', form=form, active_tab='profile')
+    return render_template('edit_geoposition.html', form=form, form1=form1, active_tab='profile')
 
 
 @app.route('/api/coords', methods=['GET'])
